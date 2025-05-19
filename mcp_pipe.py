@@ -17,11 +17,8 @@ import os
 import signal
 import sys
 import random
+import argparse
 from dotenv import load_dotenv
-
-# 加载指定的 .env 文件，默认是 .env
-env_file = os.environ.get('ENV_FILE', '.env')
-load_dotenv(env_file)
 
 # Configure logging
 logging.basicConfig(
@@ -168,16 +165,20 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 if __name__ == "__main__":
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description="MCP Pipe")
+    parser.add_argument("mcp_script", help="MCP script filename")
+    parser.add_argument("--env-file", default=".env", help="Path to .env file (default: .env)")
+    args = parser.parse_args()
+
+    # 加载指定的 .env 文件
+    load_dotenv(args.env_file)
+
     # Register signal handler
     signal.signal(signal.SIGINT, signal_handler)
-    
-    # mcp_script
-    if len(sys.argv) < 2:
-        logger.error("Usage: mcp_pipe.py <mcp_script>")
-        sys.exit(1)
-    
-    mcp_script = sys.argv[1]
-    
+
+    mcp_script = args.mcp_script
+
     # Get token from environment variable or command line arguments
     endpoint_url = os.environ.get('MCP_ENDPOINT')
     if not endpoint_url:

@@ -1,1 +1,1 @@
-kill -9 $(pgrep -f 'python mcp_pipe.py aggregate.py')
+kill -9 $(pgrep -f 'python mcp_pipe.py aggregate.py --env-file .env.xiaozhi1')

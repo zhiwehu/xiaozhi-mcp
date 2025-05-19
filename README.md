@@ -33,11 +33,11 @@ pip install -r requirements.txt
 # 参考 .env.example 文件,复制到你自己的配置文件例如 .env.xiaozhi1
 ```
 
-3. Run the calculator example | 运行计算器示例:
+3. Run the example | 运行示例:
 ```bash
 # You can run different XiaoZhi MCP access points through different configuration files
 # 可以通过不同的配置文件，来运行到不同的多个小智MCP接入点
-export ENV_FILE=.env.xiaozhi1;python mcp_pipe.py aggregate.py
+python mcp_pipe.py aggregate.py --env-file .env.xiaozhi1
 ```
 
 ## Creating Your Own MCP Tools | 创建自己的MCP工具
