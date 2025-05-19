@@ -1,4 +1,4 @@
-# MCP Sample Project | MCP 示例项目
+# xiaozhi MCP Aggregate | 小智 MCP 集合项目
 
 A powerful interface for extending AI capabilities through remote control, calculations, email operations, knowledge search, and more.
 
@@ -74,7 +74,6 @@ Here's a simple example of creating an MCP tool | 以下是一个创建MCP工具
 关闭电脑的系统代理
 Close the system proxy on your computer
 ```
-
 
 ## Contributing | 贡献指南
 
