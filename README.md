@@ -24,7 +24,7 @@ MCP（模型上下文协议）是一个允许服务器向语言模型暴露可�
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 2. Set up environment variables | 设置环境变量:
