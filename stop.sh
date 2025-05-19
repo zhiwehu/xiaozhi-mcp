@@ -1,0 +1,1 @@
+kill -9 $(pgrep -f 'python mcp_pipe.py aggregate.py')
