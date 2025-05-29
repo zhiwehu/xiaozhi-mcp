@@ -9,6 +9,8 @@ a = Analysis(
     datas=[
         ('app_icon.ico', '.'),  # 包含图标文件
         ('.env', '.'),  # 包含根目录下的 .env 文件
+        ('mcp_pipe.py', '.'), # 确保 mcp_pipe.py 包含在内
+        ('tools/', 'tools/'), # 添加这一行来包含 tools 目录
     ],
     hiddenimports=[],
     hookspath=[],

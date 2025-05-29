@@ -58,8 +58,19 @@ def run_pipe():
         try:
             # 内部调用 mcp_pipe.connect_with_retry
             # 并直接创建子进程：
+
+            # 获取 PyInstaller 临时目录路径
+            if getattr(sys, 'frozen', False):
+                # 如果是打包后的可执行文件
+                base_path = sys._MEIPASS
+            else:
+                # 如果是直接运行 Python 脚本
+                base_path = os.path.dirname(__file__)
+
+            mcp_pipe_path = os.path.join(base_path, 'mcp_pipe.py')
+
             process = subprocess.Popen(
-                [sys.executable, os.path.join(os.path.dirname(__file__), 'mcp_pipe.py')],
+                [sys.executable, mcp_pipe_path], # 修改这里，使用正确的 mcp_pipe.py 路径
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
             )
             # 管道甚至可以在这里并入 GUI 日志:
