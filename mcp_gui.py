@@ -14,18 +14,25 @@ import logging
 if '--run-pipe-only' in sys.argv:
     # 如果检测到特定参数，导入并运行 mcp_pipe 的核心逻辑
     try:
-        # PyInstaller 打包后，直接导入可能需要确保 sys.path 包含临时目录
-        # 或者如果 mcp_pipe.py 自身是可执行的，并且逻辑在文件执行时运行，则无需在这里导入
-        # 最简单的方式是确保 mcp_pipe.py 自身的代码结构适合作为独立进程运行
-        # 假设 mcp_pipe.py 执行时会运行其主要逻辑
-        # 在这里，我们只是让这个子进程继续执行 mcp_pipe.py 的代码
-        # 而主进程（不带 --run-pipe-only 参数的那个）则不进入这里的逻辑
         logging.info("Running as pipe process. Executing mcp_pipe.py logic...")
-        # 如果 mcp_pipe.py 需要 MCP_ENDPOINT，确保子进程也能访问到环境变量
-        # 这里不需要再调用 mcp_pipe 的函数，因为子进程就是运行的 mcp_pipe_path
-        # 这个 if 块的目的是让带有 --run-pipe-only 参数的进程在执行完 mcp_pipe_path 的代码后退出
-        # 避免它继续执行 mcp_gui.py 的 GUI 代码
-        pass # 子进程会执行 mcp_pipe.py 的代码，执行完毕后会自动退出
+
+        # 获取 PyInstaller 临时目录路径
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的可执行文件
+            base_path = sys._MEIPASS
+        else:
+            # 如果是直接运行 Python 脚本
+            base_path = os.path.dirname(__file__)
+
+        mcp_pipe_path = os.path.join(base_path, 'mcp_pipe.py')
+
+        # 读取 mcp_pipe.py 的内容并执行
+        with open(mcp_pipe_path, 'r', encoding='utf-8') as f:
+            pipe_code = f.read()
+
+        # 执行 mcp_pipe.py 的代码
+        exec(pipe_code, globals(), locals())
+
     except Exception as e:
         logging.error(f"Error in pipe process logic: {e}")
     sys.exit(0) # 子进程执行完毕或出错后退出，避免启动 GUI
