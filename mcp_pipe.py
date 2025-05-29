@@ -64,6 +64,7 @@ async def _connect_to_server(uri: str):
         process = subprocess.Popen(
             [python_exe, script_path],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            encoding='utf-8',
             stderr=subprocess.PIPE, text=True, bufsize=1
         )
         logger.info(f"启动子进程: {mcp_script}")
