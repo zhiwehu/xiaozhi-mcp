@@ -4,12 +4,32 @@ import sys
 import threading
 import asyncio
 import subprocess
+import argparse
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
 from dotenv import load_dotenv
 from mcp_pipe import connect_with_retry
 import logging
 
+# 解析命令行参数：--run-pipe-only 只运行管道，不启动 GUI
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '--run-pipe-only',
+    action='store_true',
+    help='仅以管道子进程模式启动，不显示 GUI'
+)
+args = parser.parse_args()
+
+if args.run_pipe_only:
+    # 直接运行管道逻辑后退出
+    try:
+        connect_with_retry()
+    except Exception as e:
+        print(f"运行管道时出错: {e}", file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+
+# 以下是 GUI 部分
 # 全局保存子进程引用
 process = None
 
@@ -26,7 +46,7 @@ root.title('MCP Pipe GUI')
 
 # 日志区
 text_log = scrolledtext.ScrolledText(root, width=80, height=20)
-text_log.pack(padx=10, pady=(10,0))
+text_log.pack(padx=10, pady=(10, 0))
 
 # TextHandler: Logging → GUI
 class TextHandler(logging.Handler):
@@ -39,13 +59,15 @@ class TextHandler(logging.Handler):
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 handler = TextHandler()
-handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+handler.setFormatter(
+    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+)
 root_logger.addHandler(handler)
 logging.getLogger('FileManager').setLevel(logging.INFO)
 
 # 按钮区
 top_frame = tk.Frame(root)
-top_frame.pack(pady=(5,10))
+top_frame.pack(pady=(5, 10))
 btn_run = tk.Button(top_frame, text='启动', width=12)
 btn_run.pack(side=tk.LEFT, padx=5)
 btn_stop = tk.Button(top_frame, text='停止', width=12, state=tk.DISABLED)
@@ -54,31 +76,32 @@ btn_stop.pack(side=tk.LEFT, padx=5)
 # 启动逻辑
 def run_pipe():
     global process
+
     def target():
         try:
-            # 内部调用 mcp_pipe.connect_with_retry
-            # 并直接创建子进程：
-
-            # 获取 PyInstaller 临时目录路径
+            # 判断是否为打包后的可执行文件
             if getattr(sys, 'frozen', False):
-                # 如果是打包后的可执行文件
                 base_path = sys._MEIPASS
             else:
-                # 如果是直接运行 Python 脚本
                 base_path = os.path.dirname(__file__)
 
             mcp_pipe_path = os.path.join(base_path, 'mcp_pipe.py')
 
+            # 调用自身 exe + 参数 --run-pipe-only
             process = subprocess.Popen(
-                [sys.executable, mcp_pipe_path, '--run-pipe-only'], # 修改这里，传递参数给子进程
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+                [sys.executable, mcp_pipe_path, '--run-pipe-only'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True
             )
-            # 管道甚至可以在这里并入 GUI 日志:
+
+            # 将子进程输出显示到 GUI 日志
             for line in process.stdout:
-                logging.info(line.strip())
+                logging.info(line.rstrip())
             process.wait()
         except Exception as e:
             logging.error(f"运行出错: {e}")
+
     threading.Thread(target=target, daemon=True).start()
     btn_run.config(state=tk.DISABLED)
     btn_stop.config(state=tk.NORMAL)
@@ -93,13 +116,11 @@ def stop_pipe():
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
             process.kill()
-    # 退出主 GUI 进程
     root.quit()
     sys.exit(0)
 
 btn_run.config(command=run_pipe)
 btn_stop.config(command=stop_pipe)
 
-# 只有当没有 --run-pipe-only 参数时才启动 GUI
-# if '--run-pipe-only' not in sys.argv: # 这个检查已经在文件顶部做了
-root.mainloop() # <-- 保持在这里，但上面的 if 块会阻止带参数的进程到达这里
+# 启动 GUI 主循环
+root.mainloop()
