@@ -3,10 +3,7 @@ This script is used to connect to the MCP server and pipe the input and output t
 Version: 0.1.0
 
 Usage:
-
-export MCP_ENDPOINT=<mcp_endpoint>
-python mcp_pipe.py <mcp_script>
-
+Just double click the exe file to run.
 """
 
 import asyncio
@@ -17,7 +14,6 @@ import os
 import signal
 import sys
 import random
-import argparse
 from dotenv import load_dotenv
 
 # Configure logging
@@ -167,24 +163,31 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 if __name__ == "__main__":
-    # 解析命令行参数
-    parser = argparse.ArgumentParser(description="MCP Pipe")
-    parser.add_argument("mcp_script", help="MCP script filename")
-    parser.add_argument("--env-file", default=".env", help="Path to .env file (default: .env)")
-    args = parser.parse_args()
-
-    # 加载指定的 .env 文件
-    load_dotenv(args.env_file)
+    # 设置默认的MCP脚本
+    mcp_script = "aggregate.py"
+    
+    # 获取exe所在目录
+    if getattr(sys, 'frozen', False):
+        # 如果是打包后的exe
+        application_path = os.path.dirname(sys.executable)
+    else:
+        # 如果是python脚本
+        application_path = os.path.dirname(os.path.abspath(__file__))
+    
+    # 切换到exe所在目录
+    os.chdir(application_path)
+    
+    # 加载 .env 文件
+    load_dotenv()
 
     # Register signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    mcp_script = args.mcp_script
-
-    # Get token from environment variable or command line arguments
+    # Get token from environment variable
     endpoint_url = os.environ.get('MCP_ENDPOINT')
     if not endpoint_url:
         logger.error("Please set the `MCP_ENDPOINT` environment variable")
+        input("Press Enter to exit...")  # 等待用户按键，这样用户可以看到错误信息
         sys.exit(1)
     
     # Start main loop
@@ -194,4 +197,5 @@ if __name__ == "__main__":
         logger.info("Program interrupted by user")
     except Exception as e:
         logger.error(f"Program execution error: {e}")
+        input("Press Enter to exit...")  # 等待用户按键，这样用户可以看到错误信息
 
