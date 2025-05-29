@@ -15,7 +15,7 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
 
 # 设置默认工作目录为 Downloads
-DEFAULT_WORK_DIR = os.path.expanduser("C:\\Users\\Jeffrey Hu\\Downloads")
+DEFAULT_WORK_DIR = os.path.expanduser("~/Downloads")
 
 def register_file_manager_tools(mcp: FastMCP):
     @mcp.tool()
