@@ -67,15 +67,33 @@ async def connect_to_server(uri):
             reconnect_attempt = 0
             backoff = INITIAL_BACKOFF
             
+            # 获取Python解释器路径
+            if getattr(sys, 'frozen', False):
+                # 如果是打包后的exe
+                python_exe = sys.executable
+            else:
+                # 如果是python脚本
+                python_exe = sys.executable
+
+            # 获取脚本路径
+            if getattr(sys, 'frozen', False):
+                # 如果是打包后的exe
+                script_path = os.path.join(os.path.dirname(sys.executable), mcp_script)
+            else:
+                # 如果是python脚本
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), mcp_script)
+
             # Start mcp_script process
             process = subprocess.Popen(
-                [sys.executable, mcp_script],
+                [python_exe, script_path],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,  # Use text mode
                 encoding='utf-8',
-                errors='replace'
+                errors='replace',
+                bufsize=1,  # 行缓冲
+                universal_newlines=True  # 使用通用换行符
             )
             logger.info(f"Started {mcp_script} process")
             
