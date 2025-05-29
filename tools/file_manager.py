@@ -8,6 +8,9 @@ from pathlib import Path
 from send2trash import send2trash
 
 logger = logging.getLogger('FileManager')
+logger.setLevel(logging.INFO)
+# Allow logs to propagate to root handlers
+logger.propagate = True
 
 # Fix UTF-8 encoding for Windows console
 if sys.platform == 'win32':
