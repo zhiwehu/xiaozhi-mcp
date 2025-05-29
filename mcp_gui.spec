@@ -3,22 +3,22 @@ import os
 
 block_cipher = None
 
-# 项目根路径
-project_dir = os.path.abspath(os.path.dirname(__file__))
+# SPECPATH 是由 PyInstaller 注入的全局变量，指向当前 .spec 文件的目录
+spec_root = os.path.abspath(SPECPATH)
 
 a = Analysis(
     ['mcp_gui.py'],
-    pathex=[project_dir],                             # 指定脚本查找路径
+    pathex=[spec_root],            # 使用 SPECPATH 作为搜索路径
     binaries=[],
     datas=[
-        ('app_icon.ico', '.'),                        # 包含图标
-        ('.env', '.'),                                # 包含环境变量文件
-        ('mcp_pipe.py', '.'),                         # 包含子进程脚本
-        ('tools', 'tools'),                           # 包含整个 tools 目录
+        ('app_icon.ico', '.'),      # 包含图标
+        ('.env', '.'),              # 环境变量文件
+        ('mcp_pipe.py', '.'),       # 子进程脚本
+        ('tools', 'tools'),         # 整个 tools 目录
     ],
     hiddenimports=[
-        'dotenv',                                      # 显式补充 dotenv
-        'mcp_pipe',                                     # 确保 mcp_pipe 被打包
+        'dotenv',                   # 显式补充动态导入
+        'mcp_pipe',
     ],
     hookspath=[],
     hooksconfig={},
@@ -43,8 +43,8 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,                                  # GUI 不弹命令行窗口
-    icon='app_icon.ico',                            # 指定程序图标
+    console=False,                 # 禁止命令行窗口
+    icon='app_icon.ico',
 )
 
 coll = COLLECT(
