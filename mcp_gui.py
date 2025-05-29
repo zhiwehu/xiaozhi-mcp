@@ -10,6 +10,28 @@ from dotenv import load_dotenv
 from mcp_pipe import connect_with_retry
 import logging
 
+# 在文件顶部检查命令行参数
+if '--run-pipe-only' in sys.argv:
+    # 如果检测到特定参数，导入并运行 mcp_pipe 的核心逻辑
+    try:
+        # PyInstaller 打包后，直接导入可能需要确保 sys.path 包含临时目录
+        # 或者如果 mcp_pipe.py 自身是可执行的，并且逻辑在文件执行时运行，则无需在这里导入
+        # 最简单的方式是确保 mcp_pipe.py 自身的代码结构适合作为独立进程运行
+        # 假设 mcp_pipe.py 执行时会运行其主要逻辑
+        # 在这里，我们只是让这个子进程继续执行 mcp_pipe.py 的代码
+        # 而主进程（不带 --run-pipe-only 参数的那个）则不进入这里的逻辑
+        logging.info("Running as pipe process. Executing mcp_pipe.py logic...")
+        # 如果 mcp_pipe.py 需要 MCP_ENDPOINT，确保子进程也能访问到环境变量
+        # 这里不需要再调用 mcp_pipe 的函数，因为子进程就是运行的 mcp_pipe_path
+        # 这个 if 块的目的是让带有 --run-pipe-only 参数的进程在执行完 mcp_pipe_path 的代码后退出
+        # 避免它继续执行 mcp_gui.py 的 GUI 代码
+        pass # 子进程会执行 mcp_pipe.py 的代码，执行完毕后会自动退出
+    except Exception as e:
+        logging.error(f"Error in pipe process logic: {e}")
+    sys.exit(0) # 子进程执行完毕或出错后退出，避免启动 GUI
+
+# 如果没有 --run-pipe-only 参数，则继续作为 GUI 主进程运行
+
 # 全局保存子进程引用
 process = None
 
@@ -70,7 +92,7 @@ def run_pipe():
             mcp_pipe_path = os.path.join(base_path, 'mcp_pipe.py')
 
             process = subprocess.Popen(
-                [sys.executable, mcp_pipe_path], # 修改这里，使用正确的 mcp_pipe.py 路径
+                [sys.executable, mcp_pipe_path, '--run-pipe-only'], # 修改这里，传递参数给子进程
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
             )
             # 管道甚至可以在这里并入 GUI 日志:
@@ -93,10 +115,13 @@ def stop_pipe():
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
             process.kill()
+    # 退出主 GUI 进程
     root.quit()
     sys.exit(0)
 
 btn_run.config(command=run_pipe)
 btn_stop.config(command=stop_pipe)
 
-root.mainloop()
+# 只有当没有 --run-pipe-only 参数时才启动 GUI
+# if '--run-pipe-only' not in sys.argv: # 这个检查已经在文件顶部做了
+root.mainloop() # <-- 保持在这里，但上面的 if 块会阻止带参数的进程到达这里
