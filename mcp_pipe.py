@@ -26,13 +26,14 @@ logger = logging.getLogger('MCP_PIPE')
 # Reconnection settings
 INITIAL_BACKOFF = 1  # Initial wait time in seconds
 MAX_BACKOFF = 60  # Maximum wait time in seconds
+MAX_RECONNECT_ATTEMPTS = 5  # 最大重连次数
 reconnect_attempt = 0
 backoff = INITIAL_BACKOFF
 
 async def connect_with_retry(uri):
     """Connect to WebSocket server with retry mechanism"""
     global reconnect_attempt, backoff
-    while True:  # Infinite reconnection
+    while reconnect_attempt < MAX_RECONNECT_ATTEMPTS:  # 限制重连次数
         try:
             if reconnect_attempt > 0:
                 wait_time = backoff * (1 + random.random() * 0.1)  # Add some random jitter
@@ -41,12 +42,18 @@ async def connect_with_retry(uri):
                 
             # Attempt to connect
             await connect_to_server(uri)
+            # 如果连接成功，直接返回，不再继续循环
+            return
         
         except Exception as e:
             reconnect_attempt += 1
             logger.warning(f"Connection closed (attempt: {reconnect_attempt}): {e}")            
             # Calculate wait time for next reconnection (exponential backoff)
             backoff = min(backoff * 2, MAX_BACKOFF)
+            
+            if reconnect_attempt >= MAX_RECONNECT_ATTEMPTS:
+                logger.error(f"Maximum reconnection attempts ({MAX_RECONNECT_ATTEMPTS}) reached. Giving up.")
+                raise  # 重试次数用完，抛出异常
 
 async def connect_to_server(uri):
     """Connect to WebSocket server and establish bidirectional communication with `mcp_script`"""
@@ -72,28 +79,32 @@ async def connect_to_server(uri):
             )
             logger.info(f"Started {mcp_script} process")
             
-            # Create two tasks: read from WebSocket and write to process, read from process and write to WebSocket
-            await asyncio.gather(
-                pipe_websocket_to_process(websocket, process),
-                pipe_process_to_websocket(process, websocket),
-                pipe_process_stderr_to_terminal(process)
-            )
+            try:
+                # Create two tasks: read from WebSocket and write to process, read from process and write to WebSocket
+                await asyncio.gather(
+                    pipe_websocket_to_process(websocket, process),
+                    pipe_process_to_websocket(process, websocket),
+                    pipe_process_stderr_to_terminal(process)
+                )
+            except Exception as e:
+                logger.error(f"Error during communication: {e}")
+                raise
+            finally:
+                # Ensure the child process is properly terminated
+                if process.poll() is None:  # 如果进程还在运行
+                    logger.info(f"Terminating {mcp_script} process")
+                    try:
+                        process.terminate()
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                    logger.info(f"{mcp_script} process terminated")
     except websockets.exceptions.ConnectionClosed as e:
         logger.error(f"WebSocket connection closed: {e}")
         raise  # Re-throw exception to trigger reconnection
     except Exception as e:
         logger.error(f"Connection error: {e}")
         raise  # Re-throw exception
-    finally:
-        # Ensure the child process is properly terminated
-        if 'process' in locals():
-            logger.info(f"Terminating {mcp_script} process")
-            try:
-                process.terminate()
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-            logger.info(f"{mcp_script} process terminated")
 
 async def pipe_websocket_to_process(websocket, process):
     """Read data from WebSocket and write to process stdin"""
