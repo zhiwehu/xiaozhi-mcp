@@ -66,11 +66,13 @@ async def connect_to_server(uri):
             
             # Start mcp_script process
             process = subprocess.Popen(
-                ['python', mcp_script],
+                [sys.executable, mcp_script],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True  # Use text mode
+                text=True,  # Use text mode
+                encoding='utf-8',
+                errors='replace'
             )
             logger.info(f"Started {mcp_script} process")
             
