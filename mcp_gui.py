@@ -10,35 +10,6 @@ from dotenv import load_dotenv
 from mcp_pipe import connect_with_retry
 import logging
 
-# 在文件顶部检查命令行参数
-if '--run-pipe-only' in sys.argv:
-    # 如果检测到特定参数，导入并运行 mcp_pipe 的核心逻辑
-    try:
-        logging.info("Running as pipe process. Executing mcp_pipe.py logic...")
-
-        # 获取 PyInstaller 临时目录路径
-        if getattr(sys, 'frozen', False):
-            # 如果是打包后的可执行文件
-            base_path = sys._MEIPASS
-        else:
-            # 如果是直接运行 Python 脚本
-            base_path = os.path.dirname(__file__)
-
-        mcp_pipe_path = os.path.join(base_path, 'mcp_pipe.py')
-
-        # 读取 mcp_pipe.py 的内容并执行
-        with open(mcp_pipe_path, 'r', encoding='utf-8') as f:
-            pipe_code = f.read()
-
-        # 执行 mcp_pipe.py 的代码
-        exec(pipe_code, globals(), locals())
-
-    except Exception as e:
-        logging.error(f"Error in pipe process logic: {e}")
-    sys.exit(0) # 子进程执行完毕或出错后退出，避免启动 GUI
-
-# 如果没有 --run-pipe-only 参数，则继续作为 GUI 主进程运行
-
 # 全局保存子进程引用
 process = None
 
