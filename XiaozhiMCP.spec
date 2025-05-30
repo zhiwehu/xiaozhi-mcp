@@ -1,14 +1,5 @@
 # XiaozhiMCP.spec
 
-# Helper function to get paths correct during spec file processing
-import os
-
-# 获取 .spec 文件所在的目录
-SPEC_DIR = os.path.dirname(os.path.abspath(__file__)) # 在 .spec 文件中，__file__ 通常是定义的，指向 .spec 文件本身
-
-def get_resource_path(relative_path):
-    return os.path.join(SPEC_DIR, relative_path)
-
 block_cipher = None
 
 a = Analysis(
@@ -16,11 +7,11 @@ a = Analysis(
     pathex=['.'], # Add current directory to Python's path for PyInstaller
     binaries=[],
     datas=[
-        (get_resource_path('.env'), '.'), # Bundle a default/example .env.xiaozhi1
+        ('.env', '.'), # Bundle a default/example .env.xiaozhi1
         # (get_resource_path('path/to/another/.env.example'), '.'), # if you have others
-        (get_resource_path('tools'), 'tools'), # Bundle the entire 'tools' directory
-        (get_resource_path('aggregate.py'), '.'), # Bundle aggregate.py
-        (get_resource_path('mcp_pipe.py'), '.')    # Bundle mcp_pipe.py explicitly
+        ('tools', 'tools'), # Bundle the entire 'tools' directory
+        ('aggregate.py', '.'), # Bundle aggregate.py
+        ('mcp_pipe.py', '.')    # Bundle mcp_pipe.py explicitly
     ],
     hiddenimports=[
         'asyncio',

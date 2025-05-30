@@ -76,6 +76,8 @@ async def _connect_to_server(uri: str):
             [python_exe, script_path], # sys.executable should correctly run bundled python scripts
             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             # encoding='utf-8', # Deprecated for Popen
+            encoding='utf-8',  # <--- 新增：明确指定使用 UTF-8 编码
+            errors='replace',  # <--- 新增 (可选): 更优雅地处理潜在的编码错误，用替换字符替代无法解码的字节
             stderr=subprocess.PIPE, text=True, bufsize=1
             # cwd=os.path.dirname(script_path) # Optional: set CWD if aggregate.py uses relative paths
         )
