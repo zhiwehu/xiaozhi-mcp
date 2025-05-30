@@ -3,6 +3,9 @@
 # Helper function to get paths correct during spec file processing
 import os
 
+# 获取 .spec 文件所在的目录
+SPEC_DIR = os.path.dirname(os.path.abspath(__file__)) # 在 .spec 文件中，__file__ 通常是定义的，指向 .spec 文件本身
+
 def get_resource_path(relative_path):
     return os.path.join(SPEC_DIR, relative_path)
 
